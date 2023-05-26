@@ -1,12 +1,13 @@
 import requests
 import csv
 import time
+from item import Item
 
 
 class Sucursal:
 
     # Constructor
-    def __init__(self, sc=1, sub_cat_paths=""):
+    def __init__(self, sc=1, sub_cat_paths="", csv_filename=""):
         # int: id of branch(sucursal)
         self.sc = str(sc)
         # int: amount of items in that branch
@@ -20,6 +21,9 @@ class Sucursal:
         # TODO: I'm having second doubts about storing everything in
         # memory, maybe each query should be automatically stored in a CSV.
         self.catalog = []
+        if csv_filename == "":
+            csv_filename = f"sucursal{sc}"
+        self.csv = csv_filename
 
     # This method queries the api to get the quantity of items in each sub-category
 
@@ -29,6 +33,14 @@ class Sucursal:
             res.append({'subcat': path, 'quantity': requests.get(
                 f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/facets/search/{path}?map=c,c&sc={self.sc}').json()['Departments'][0]['Quantity']})
         return res
+
+    # Write the first row for each column name
+
+    def __write_first_row(self):
+        fields = ['nombre', 'precio_lista', 'precio', 'categoria', 'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
+        with open(f'{self.csv}.csv', 'w', newline='') as file:
+            writer = csv.writer(file, fieldnames = fields)
+            
 
     # Updates the amount of items in a SC using the data recorded for each category/sub-category
 
@@ -54,7 +66,6 @@ class Sucursal:
     def make_search_query_url(self, path, a, b):
         return f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/products/search/{path}?O=OrderByTopSaleDESC&_from={a}&_to={b}&ft&sc={self.sc}'
 
-    # TODO: TEST THIS TOMORROW
     # This should be where the magic happens.
 
     def get_catalog(self, items_per_query=50, queries_per_round=10, time_delay_per_round=5):
