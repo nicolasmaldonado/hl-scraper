@@ -1,12 +1,19 @@
 from classes.sucursal import Sucursal
 from classes.categorias import Categorias
 
-# Logging: 
-# So, I aalready have a script of how to retrieve the data.
-# Now I need to comply with some stuff and make it more usable. 
+import asyncio
+import aiohttp
+
+# Logging:
 # I was thinking about making a CLI if it doesn't take too much time.
-#   
+#
 
 if __name__ == '__main__':
-    
-    pass
+
+    c = Categorias()
+    s = Sucursal(sc=1, subcat_paths=c.subs_for_queries, csv_path="csv/")
+
+    asyncio.run(s.get_subcat_quantity())
+    print(s.subcats)
+    print("\n")
+    #asyncio.run(s.get_catalog())

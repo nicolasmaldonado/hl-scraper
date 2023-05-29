@@ -9,5 +9,11 @@ def url_get(url):
 
     load_dotenv('config.env')
 
-    return requests.get(url, proxies=json.loads(os.getenv('PROXY')))
+    proxies_settings = {}
+
+    if os.getenv('PROXY'):
+        proxies_settings = json.loads(os.getenv('PROXY_URL'))
+
+    return requests.get(url, proxies=proxies_settings)
+
         

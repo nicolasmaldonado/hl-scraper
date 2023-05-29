@@ -1,52 +1,54 @@
+import os
+from dotenv import load_dotenv
+import aiohttp
+import asyncio
 import csv
-import time
-from os.path import exists
-import json
-from .. import utils
-
 
 class Sucursal:
 
     # Constructor
-    def __init__(self, sc=1, sub_cat_paths="", csv_filename="", csv_path=""):
-        # id of branch(sucursal)
+    def __init__(self, sc=1, subcat_paths="", csv_filename="", csv_path=""):
         self.sc = str(sc)
-        # int: amount of items in that branch
-        self.sc_items_amount = 0
-        # Stores each sub-category and how many items are in that sub-cat.
-        # (I think that could be useful when making search queries)
-        # Stores in this format:
-        # [{'path': categoria/sub-categoria, 'quantity': x}]
-        #self.sub_cats = self.__get_sub_info(sub_cat_paths)
-        # This'll be the default name. 
-        # I didn't assign it in the function declaration because 
-        # I'd like to use the SC number.
+        self.subcat_urls = self.__get_sub_info(subcat_paths)
         if csv_filename == "":
             csv_filename = f"sucursal-{sc}"
         self.csv_filename = csv_filename
+        if csv_path == "":
+            csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../csv/")
         self.csv_path = csv_path
-        # Create file and write the headers
         self.__write_first_row()
 
-    # This method queries the api to get the quantity of items in each sub-category. 
+    # This method queries the api to get the quantity of items in each sub-category.
 
     def __get_sub_info(self, paths, update=False):
 
         res = []
-        # Query every category
         for path in paths:
-            res.append({'subcat': path, 'quantity': utils.url_get(
-                f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/facets/search/{path}?map=c,c&sc={self.sc}').json()['Departments'][0]['Quantity']})
-       
+            res.append(
+                f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/facets/search/{path}?map=c,c&sc={self.sc}')
         return res
+
+        # Let's give it a shot to async calls.
+        # load_dotenv('config.env')
+        # res = []
+        # if os.getenv('PROXY'):
+        #     proxy = aiohttp.ProxyConnector(proxy_url=os.getenv('PROXY'))
+        #     async with aiohttp.ClientSession(connector=proxy) as session:
+        #         # Make your HTTP requests using the session
+        #         for path in paths:
+        #             response = await session.get(f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/facets/search/{path}?map=c,c&sc={self.sc}')
+        #             res.append({'subcat': path, 'quantity': response.json()['Departments'][0]['Quantity']})
+        #             print(response.json)
+        # return res
 
     # Write the first row for each column name
 
     def __write_first_row(self):
-        fields = ['nombre', 'precio_lista', 'precio', 'categoria', 'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
+        fields = ['nombre', 'precio_lista', 'precio', 'categoria',
+                  'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
         with open(f'{self.csv_path}{self.csv_filename}.csv', 'w+', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames = fields)
-            writer.writeheader() 
+            writer = csv.DictWriter(file, fieldnames=fields)
+            writer.writeheader()
             file.close()
 
     # Updates the amount of items in a SC using the data recorded for each category/sub-category
@@ -54,10 +56,10 @@ class Sucursal:
     def update_sc_items_amount(self):
         try:
             # I guess it's redundant to check for sub-categories data. Whatever
-            assert len(self.sub_cats) > 0
+            assert len(self.subcats) > 0
             # Using list comprehension to shorten code.
             self.sc_items_amount = sum(
-                [sub_cat_entry['quantity'] for sub_cat_entry in self.sub_cats])
+                [subcats_entry['quantity'] for subcats_entry in self.subcats])
         except AssertionError:
             print(
                 "Whooops! Seems like something went wrong retrieving the sub-categories data.")
@@ -66,58 +68,98 @@ class Sucursal:
 
     def calculate_search_queries(self, max_per_search_query=50):
         # Using list comprehension to shorten code.
-        return sum([int(sub_cat_entry['quantity'] / max_per_search_query) + 1 for sub_cat_entry in self.sub_cats])
+        return sum([int(subcats_entry['quantity'] / max_per_search_query) + 1 for subcats_entry in self.subcats])
 
     # Let's compose the URL for the search query
 
     def make_search_query_url(self, path, a, b):
         return f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/products/search/{path}?O=OrderByTopSaleDESC&_from={a}&_to={b}&ft&sc={self.sc}'
 
-    # This should be where the magic happens.
-    # TODO: Try to not duplicate elements in the CSV. 
-    # But, add an option to force the update. 
-    # Maybe it could have an option to save the CSV with the DATE or version (1,2,3,etc...)
-    # It should be useful to take snapshots and compare how the data changes.
+    # TODO: comment this function
 
-    def get_catalog(self, items_per_query=50, queries_per_round=10, time_delay_per_round=5):
+    async def fetch_quantity(self, session, url):
+        async with session.get(url) as response:
+            cat = '/'.join(url.split('?')[0].split('/')[-2:])
+            quantity = (await response.json())['Departments'][0]['Quantity']
+            return {'cat': cat, 'quantity': quantity}
 
-        fields = ['nombre', 'precio_lista', 'precio', 'categoria', 'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
-        
+    # TODO: comment this function
+
+    async def get_subcat_quantity(self):
+        # Setting the proxy
+        proxy_connector = None
+        load_dotenv('config.env')
+        if os.getenv('PROXY_URL'):
+            proxy_connector = aiohttp.ProxyConnector(
+                proxy_url=os.getenv('PROXY_URL'))
+
+        async with aiohttp.ClientSession(connector=proxy_connector) as session:
+            # Make your HTTP requests using the session
+            tasks = []
+            for url in self.subcat_urls:
+                task = asyncio.create_task(self.fetch_quantity(session, url))
+                tasks.append(task)
+            results = await asyncio.gather(*tasks)
+        self.subcats = results
+
+    # TODO: comment this function
+
+    async def fetch_items(self, session, url, csv_writer):
+
+        fields = ['nombre', 'precio_lista', 'precio', 'categoria',
+                  'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
+        async with session.get(url) as response:
+            # Return array with Items as dictionaries
+            result = (await response.json())
+            # Iterate through every item
+            for item in result:
+                item = {
+                    'nombre': item['productName'],
+                    'precio_lista': item['items'][0]['sellers'][0]['commertialOffer']['ListPrice'],
+                    'precio': item['items'][0]['sellers'][0]['commertialOffer']['Price'],
+                    'categoria': item['categories'],
+                    'product_id': item['productId'],
+                    'item_id': item['items'][0]['itemId'],
+                    'url': (item['link'] + "?sc=" + self.sc),
+                    'stock': item['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
+                    'descripcion': item['description'],
+                    # Could be useful
+                    'marca': item['brand']
+                }
+                # Write the result to the CSV file
+                csv_writer.writerow(item)
+
+    # TODO: comment this function
+
+    async def get_catalog(self, items_per_query=50):
+
+        fields = ['nombre', 'precio_lista', 'precio', 'categoria',
+                  'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
         # Opening the CSV file
         with open(f'{self.csv_path}{self.csv_filename}.csv', 'a', newline='') as file:
+            csv_writer = csv.DictWriter(file, fieldnames=fields)
 
-            writer = csv.DictWriter(file, fieldnames = fields)
-
-            # Iterating through every cat/subcat path
-            for elem in self.sub_cats:
-
-                # Querying 
+            # Building the urls for the search queries
+            urls = []
+            for elem in self.subcats:
                 for i in range(0, elem['quantity'], items_per_query):
+                    urls.append(self.make_search_query_url(
+                        elem['cat'], i, i+items_per_query-1))
 
-                    url = self.make_search_query_url(
-                        elem['subcat'], i, i+items_per_query-1)
+            # Setting the proxy
+            proxy_connector = None
+            load_dotenv('config.env')
+            if os.getenv('PROXY_URL'):
+                proxy_connector = aiohttp.ProxyConnector(
+                    proxy_url=os.getenv('PROXY_URL'))
 
-                    items_search_result = utils.url_get(url).json()
+            # Creating session through aiohttp.
+            async with aiohttp.ClientSession(connector=proxy_connector) as session:
+                tasks = []
+                for url in urls:
+                    task = asyncio.create_task(
+                        self.fetch_items(session, url, csv_writer))
+                    tasks.append(task)
 
-                    # I introduced a delay trying not to spam the server
-                    time.sleep(time_delay_per_round)
-
-                    for j in items_search_result:
-                        item = {
-                            'nombre': j['productName'],
-                            'precio_lista': j['items'][0]['sellers'][0]['commertialOffer']['ListPrice'],
-                            'precio': j['items'][0]['sellers'][0]['commertialOffer']['Price'],
-                            'categoria': j['categories'],
-                            'product_id': j['productId'],
-                            'item_id': j['items'][0]['itemId'],
-                            'url': (j['link'] + "?sc=" + self.sc),
-                            'stock': j['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
-                            'descripcion': j['description'],
-                            # Agrego este campo, quizas sea util.
-                            'marca': j['brand']
-                        }
-                        
-                        writer.writerow(item)
-            
-            file.close()
-
+                # Wait for all tasks to complete
+                await asyncio.gather(*tasks)
