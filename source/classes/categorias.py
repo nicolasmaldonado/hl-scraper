@@ -1,5 +1,8 @@
 from argparse import ArgumentError
-import utils
+import sys
+import os
+
+from .. import utils
 
 
 class Categorias:
