@@ -105,7 +105,7 @@ class Sucursal:
                     'item_id': item['items'][0]['itemId'],
                     'url': (item['link'] + "?sc=" + self.sc),
                     'stock': item['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
-                    'descripcion': item['description'],
+                    'descripcion': (item['description']).encode("utf-8"),
                     # Could be useful
                     'marca': item['brand']
                 }

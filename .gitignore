@@ -161,7 +161,7 @@ cython_debug/
 
 # Do not keep track of files inside the CSV and JSON folders
 /csv/*
-!/csv/
+!/csv/.gitkeep
 
 /json/*
 !/json/

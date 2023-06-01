@@ -13,14 +13,14 @@ if __name__ == '__main__':
     c = Categorias()
 
     sucursales = {
-        1: '  Cordoba        - Hipermercado Lugones',
-        2: '  Cordoba        - Hipermercado Rivera',
-        3: '  Cordoba        - Hipermercado Jacinto Rios',
-        4: '  Cordoba        - Hipermercado Ruta 9',
-        6: '  Mendoza        - Hipermercado Godoy Cruz',
-        7: '  Misiones       - Hipermercado Posadas ',
-        8: '  Tucuman        - Hipermercado Tucuman 1',
-        9: '  Tucuman        - Hipermercado Tucuman 2',
+        1: '   Cordoba        - Hipermercado Lugones',
+        2: '   Cordoba        - Hipermercado Rivera',
+        3: '   Cordoba        - Hipermercado Jacinto Rios',
+        4: '   Cordoba        - Hipermercado Ruta 9',
+        6: '   Mendoza        - Hipermercado Godoy Cruz',
+        7: '   Misiones       - Hipermercado Posadas ',
+        8: '   Tucuman        - Hipermercado Tucuman 1',
+        9: '   Tucuman        - Hipermercado Tucuman 2',
         10: '  Chaco          - Hipermercado Chaco ',
         11: '  Santa Fe       - Hipermercado Rosario',
         12: '  Sgo del Estero - Hipermercado Sgo del Estero',
