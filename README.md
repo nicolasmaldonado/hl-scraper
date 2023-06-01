@@ -4,15 +4,15 @@
 
 Create a virtual environment, decide upon a directory where you want to place it, and run the venv module as a script with the directory path:
 
-    python -m venv tutorial-env
+    python -m venv env
 
 On Windows, run:
 
-    tutorial-env\Scripts\activate.bat
+    env\Scripts\activate.bat
 
 On Unix or MacOS, run:
 
-    source tutorial-env/bin/activate
+    source env/bin/activate
 
 Install packages:
 
