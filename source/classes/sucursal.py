@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import aiohttp
 import asyncio
-from aiohttp_socks import ProxyType, ProxyConnector, ChainProxyConnector
+from aiohttp_socks import ProxyConnector
 import csv
 
 
@@ -62,16 +62,13 @@ class Sucursal:
         # Setting the proxy
         load_dotenv('config.env')
 
-        # proxy_connector = None
-        # if os.getenv('PROXY_URL'):
-        #     url = f'socks5://{os.getenv("PROXY_URL")}'
-        #     print(url)
-        #     proxy_connector = ProxyConnector.from_url(url=url)
-            
-        #trust_env=True
-        #PROXY_URL=157.245.145.105:12345
-        #p_alem=104.248.136.215:8080
-        async with aiohttp.ClientSession(trust_env=True) as session:
+        proxy_connector = None
+        if os.getenv('PROXY_URL'):
+            url = f'socks5://{os.getenv("PROXY_URL")}'
+            print(url)
+            proxy_connector = ProxyConnector.from_url(url=url)
+
+        async with aiohttp.ClientSession(proxy_connector) as session:
             # Make your HTTP requests using the session
             tasks = []
             for url in self.subcat_urls:
@@ -82,7 +79,7 @@ class Sucursal:
 
         # Let's compose the URL for the search query
 
-    # TODO: comment
+    # Parses the path into the query.
 
     def make_search_query_url(self, path, a, b):
         return f'https://www.hiperlibertad.com.ar/api/catalog_system/pub/products/search/{path}?O=OrderByTopSaleDESC&_from={a}&_to={b}&ft&sc={self.sc}'
@@ -134,10 +131,10 @@ class Sucursal:
                         elem['cat'], i, i+items_per_query-1))
 
             # Setting the proxy
-            # proxy_connector = None
-            # if os.getenv('PROXY_URL'):
-            #     proxy_connector = ProxyConnector.from_url(f'socks5://{os.getenv("PROXY_URL")}')
-
+            proxy_connector = None
+            if os.getenv('PROXY_URL'):
+                proxy_connector = ProxyConnector.from_url(
+                    f'socks5://{os.getenv("PROXY_URL")}')
 
             # Creating session through aiohttp.
             async with aiohttp.ClientSession(trust_env=True) as session:
@@ -150,14 +147,11 @@ class Sucursal:
                 # Wait for all tasks to complete
                 await asyncio.gather(*tasks)
 
+    # TODO: Fix the timeout error when connecting to the proxy
+    # Couldn't make it work yet.
 
-    async def __get_ip(self, session, url):
-        async with session.get(url) as response:
-            res = (await response.text())
-            print(res)
-
-    async def test_proxy(self,url):
-        #load_dotenv('config.env')
+    async def test_proxy(self, url):
+        # load_dotenv('config.env')
         connector = ProxyConnector.from_url('socks5://144.217.197.151:38611')
         async with aiohttp.ClientSession(connector=connector) as session:
             async with session.get(url) as response:

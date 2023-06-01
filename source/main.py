@@ -1,7 +1,12 @@
+import asyncio
+# import sys
+# import os
+
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from classes.sucursal import Sucursal
 from classes.categorias import Categorias
 
-import asyncio
 
 if __name__ == '__main__':
 
@@ -24,17 +29,19 @@ if __name__ == '__main__':
         15: '  Santa Fe       - Hipermercado Rafaela',
         16: '  Mendoza        - Tienda Digital Mza Capital'}
 
-    op = 1
-    while op != 0:
+    while True:
         op = int(input(
-            '1. Generar csv de una sucursal.\n2. Generar csv de todas las sucursales.\n0. Salir'))
+            '1. Generar csv de una sucursal.\n2. Generar csv de todas las sucursales.\n0. Salir\n\t'))
+        if op == 0:
+            break
         if op == 1:
+            print("\n")
             for suc in sucursales:
                 print(suc, sucursales[suc])
             sc = int(input('\tIngrese un numero:'))
 
             csv_path = input(
-                'Ingrese carpeta de destino (por default \'csv\' del proyecto):')
+                '\nIngrese carpeta de destino (por default \'csv\' del proyecto):')
             csv_filename = input('Nombre del CSV (default \'sucursal-#sc\'):')
             s = Sucursal(sc=sc, subcat_paths=c.subs_for_queries,
                          csv_filename=csv_filename, csv_path=csv_path)
@@ -45,6 +52,6 @@ if __name__ == '__main__':
             asyncio.run(s.get_catalog())
         else:
             for sc in sucursales:
-                s = Sucursal(sc=1, subcat_paths=c.subs_for_queries)
+                s = Sucursal(sc=sc, subcat_paths=c.subs_for_queries)
                 asyncio.run(s.get_subcat_quantity())
                 asyncio.run(s.get_catalog())
