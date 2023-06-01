@@ -22,7 +22,10 @@ To run the script, execute the main.py file on source:
 
     python source/main.py
 
-Follow the instructions.
+Follow the instructions on the terminal.
+
+
+========================================================
 
 
 The proxy URL should be inside the config.env file.
