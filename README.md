@@ -1,18 +1,9 @@
 # hl-scraper
 
-(Not final version)
+(Recommended) Install and activate a virtual enviroment first:
 
-Create a virtual environment, decide upon a directory where you want to place it, and run the venv module as a script with the directory path:
+https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
 
-    python -m venv env
-
-On Windows, run:
-
-    env\Scripts\activate.bat
-
-On Unix or MacOS, run:
-
-    source env/bin/activate
 
 Install packages:
 

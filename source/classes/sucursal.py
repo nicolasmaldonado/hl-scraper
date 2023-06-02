@@ -105,7 +105,7 @@ class Sucursal:
                     'item_id': item['items'][0]['itemId'],
                     'url': (item['link'] + "?sc=" + self.sc),
                     'stock': item['items'][0]['sellers'][0]['commertialOffer']['AvailableQuantity'],
-                    'descripcion': (item['description']).encode("utf-8"),
+                    'descripcion': (item['description']),
                     # Could be useful
                     'marca': item['brand']
                 }
@@ -120,7 +120,7 @@ class Sucursal:
         fields = ['nombre', 'precio_lista', 'precio', 'categoria',
                   'product_id', 'item_id', 'url', 'stock', 'descripcion', 'marca']
         # Opening the CSV file
-        with open(f'{self.csv_path}{self.csv_filename}.csv', 'a', newline='') as file:
+        with open(f'{self.csv_path}{self.csv_filename}.csv', 'a', newline='', encoding="utf-8") as file:
             csv_writer = csv.DictWriter(file, fieldnames=fields)
 
             # Building the urls for the search queries
