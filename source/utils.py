@@ -13,12 +13,12 @@ def url_get(url):
 
     proxies_settings = {}
 
-    if os.getenv('PROXY_URL'):
+    # if os.getenv('PROXY_URL'):
 
-        proxies_settings = {
-            'http': os.getenv('PROXY_URL'),
-            'https': os.getenv('PROXY_URL'),
-            }
+    #     proxies_settings = {
+    #         'http': f"socks5://{os.getenv('PROXY_URL')}",
+    #         'https': f"socks5://{os.getenv('PROXY_URL')}"
+    #     }
 
     return requests.get(url, proxies=proxies_settings)
 

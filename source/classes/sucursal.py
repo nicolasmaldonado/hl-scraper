@@ -147,18 +147,27 @@ class Sucursal:
                 # Wait for all tasks to complete
                 await asyncio.gather(*tasks)
 
-    # TODO: Fix the timeout error when connecting to the proxy
-    # Couldn't make it work yet.
-
-    async def test_proxy(self, url):
-        # load_dotenv('config.env')
-        connector = ProxyConnector.from_url('socks5://144.217.197.151:38611')
-        async with aiohttp.ClientSession(connector=connector) as session:
-            async with session.get(url) as response:
+    # Test the connection to a proxy
+                
+    async def test_proxy(self, get_ip_url):
+        load_dotenv('config.env')
+        proxy_connector = None
+        if os.getenv('PROXY_URL'):
+                proxy_connector = ProxyConnector.from_url(
+                    f'socks5://{os.getenv("PROXY_URL")}')
+                
+        # Get IP without proxy
+        async with aiohttp.ClientSession() as session:
+            async with session.get(get_ip_url) as response:
                 res = (await response.text())
                 print(res)
-                return res
-            # tasks = []
-            # task = asyncio.create_task(self.__get_ip(session, url))
-            # tasks.append(task)
-            # results = await asyncio.gather(*tasks)
+                await session.close()
+
+                # Get IP using a proxy
+                async with aiohttp.ClientSession(connector=proxy_connector) as session:
+                    async with session.get(get_ip_url) as response:
+                        res1 = (await response.text())
+                        print(res1)
+                        await session.close()
+                        return [res, res1]
+
